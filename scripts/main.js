@@ -14,6 +14,23 @@ const ORANGE = 0xffa500
 const GREEN = 0x00ff00
 const YELLOW = 0xffff00
 
+const KEY = {
+    R: 'k',
+    R_PRIME: 'j',
+    L: 'd',
+    L_PRIME: 'f',
+    U: 'u',
+    U_PRIME: 'r',
+    D: 'v',
+    D_PRIME: 'm',
+    F: 'n',
+    F_PRIME: 'b',
+    B: 'e',
+    B_PRIME: 'i',
+    M: 'h',
+    M_PRIME: 'g'
+}
+
 // Event Listeners
 document.addEventListener('keypress', controlManager)
 
@@ -37,7 +54,7 @@ const controls = new OrbitControls( camera, renderer.domElement )
 // axesHelper.position.set(-0.5, -0.5, -0.5)
 // scene.add(axesHelper)
 
-// -* Helper Functions *-
+// -- Helper Functions --
 function vect3(x, y, z) {
     return new THREE.Vector3(x, y, z)
 }
@@ -88,7 +105,14 @@ function reset(side) {
     side.rotation.set(0, 0, 0)
     rotation = 0
     animationFrame = 0
-    
+}
+
+function setAxes({x = [0, 1, 2], y = [0, 1, 2], z = [0, 1, 2]}) {
+    return {
+        x: x,
+        y: y,
+        z: z,
+    }
 }
 
 // Building the rubik's cube
@@ -127,7 +151,7 @@ const pieces = [
 ] 
 
 // Create side groups
-const side = {
+const SIDES = {
     'left'  : createGroup(scene, 0, 1, 1),
     'down'  : createGroup(scene, 1, 0, 1),
     'back'  : createGroup(scene, 1, 1, 0),
@@ -136,136 +160,31 @@ const side = {
     'front' : createGroup(scene, 1, 1, 2)
 }
 
-// Rotation Functions
-function rotateRight(isPrime = false) {
+function rotate(s, axes, direction = false) {
     pieces.forEach((piece) => {
         let pos = piece.position
-        if (pos.x == 2) {
-            piece.position.set(pos.x - 2, pos.y - 1, pos.z - 1)
-            side.right.add(piece)
+        if (axes.x.includes(pos.x) && axes.y.includes(pos.y) && axes.z.includes(pos.z)) {
+            piece.position.set(pos.x - s.position.x, pos.y - s.position.y, pos.z - s.position.z)
+            s.add(piece)
+            console.log(s)
         }
     })
-    rotateRightAnimation(isPrime)
+    doRotation(s, axes, direction)
 }
 
-function rotateRightAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateRightAnimation(isPrime))
+function doRotation(s, axes, direction) {
+    animationFrame = requestAnimationFrame(() => doRotation(s, axes, direction))
     if (rotation < R_ANGLE) {
-        side.right.rotation.x += -Math.PI * ROTATION_SPEED * sign
-        rotation += Math.PI * ROTATION_SPEED
-    } else {
-        reset(side.right)
-    }
-}
-
-function rotateFront(isPrime = false) {
-    pieces.forEach((piece) => {
-        let pos = piece.position
-        if (pos.z == 2) {
-            piece.position.set(pos.x - 1, pos.y - 1, pos.z - 2)
-            side.front.add(piece)
+        if (axes.x.length == 1) {
+            s.rotation.x += PI * ROTATION_SPEED * direction
+        } else if (axes.y.length == 1) {
+            s.rotation.y += PI * ROTATION_SPEED * direction
+        } else if (axes.z.length == 1) {
+            s.rotation.z += PI * ROTATION_SPEED * direction
         }
-    })
-    rotateFrontAnimation(isPrime)
-}
-
-function rotateFrontAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateFrontAnimation(isPrime))
-    if (rotation < R_ANGLE) {
-        side.front.rotation.z += -Math.PI * ROTATION_SPEED * sign
         rotation += Math.PI * ROTATION_SPEED
     } else {
-        reset(side.front)
-    }
-}
-
-function rotateLeft(isPrime = false) {
-    pieces.forEach((piece) => {
-        let pos = piece.position
-        if (pos.x == 0) {
-            piece.position.set(pos.x, pos.y - 1, pos.z - 1)
-            side.left.add(piece)
-        }
-    })
-    rotateLeftAnimation(isPrime)
-}
-
-function rotateLeftAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateLeftAnimation(isPrime))
-    if (rotation < R_ANGLE) {
-        side.left.rotation.x += Math.PI * ROTATION_SPEED * sign
-        rotation += Math.PI * ROTATION_SPEED
-    } else {
-        reset(side.left)
-    }
-}
-
-function rotateBack(isPrime = false) {
-    pieces.forEach((piece) => {
-        let pos = piece.position
-        if (pos.z == 0) {
-            piece.position.set(pos.x - 1, pos.y - 1, pos.z)
-            side.back.add(piece)
-        }
-    })
-    rotateBackAnimation(isPrime)
-}
-
-function rotateBackAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateBackAnimation(isPrime))
-    if (rotation < R_ANGLE) {
-        side.back.rotation.z += Math.PI * ROTATION_SPEED * sign
-        rotation += Math.PI * ROTATION_SPEED
-    } else {
-        reset(side.back)
-    }
-}
-
-function rotateUp(isPrime = false) {
-    pieces.forEach((piece) => {
-        let pos = piece.position
-        if (pos.y == 2) {
-            piece.position.set(pos.x - 1, pos.y - 2, pos.z - 1)
-            side.up.add(piece)
-        }
-    })
-    rotateUpAnimation(isPrime)
-}
-
-function rotateUpAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateUpAnimation(isPrime))
-    if (rotation < R_ANGLE) {
-        side.up.rotation.y -= Math.PI * ROTATION_SPEED * sign
-        rotation += Math.PI * ROTATION_SPEED
-    } else {
-        reset(side.up)
-    }
-}
-
-function rotateDown(isPrime = false) {
-    pieces.forEach((piece) => {
-        let pos = piece.position
-        if (pos.y == 0) {
-            piece.position.set(pos.x - 1, pos.y, pos.z - 1)
-            side.down.add(piece)
-        }
-    })
-    rotateDownAnimation(isPrime)
-}
-
-function rotateDownAnimation(isPrime) {
-    let sign = (isPrime) ? -1 : 1
-    animationFrame = requestAnimationFrame(() => rotateDownAnimation(isPrime))
-    if (rotation < R_ANGLE) {
-        side.down.rotation.y += Math.PI * ROTATION_SPEED * sign
-        rotation += Math.PI * ROTATION_SPEED
-    } else {
-        reset(side.down)
+        reset(s)
     }
 }
 
@@ -273,41 +192,47 @@ function rotateDownAnimation(isPrime) {
 function controlManager(e) {
     if (animationFrame) return
     switch (e.key) {
-        case 'a':
-            rotateLeft()
+        case KEY.R:
+            rotate(SIDES.right, setAxes({x: [2]}), -1)
             break
-        case 'A':
-            rotateLeft(true)
+        case KEY.R_PRIME:
+            rotate(SIDES.right, setAxes({x: [2]}), 1)
             break
-        case 's':
-            rotateFront()
+        case KEY.L:
+            rotate(SIDES.left, setAxes({x: [0]}), -1)
             break
-        case 'S':
-            rotateFront(true)
+        case KEY.L_PRIME:
+            rotate(SIDES.left, setAxes({x: [0]}), 1)
             break
-        case 'd':
-            rotateBack()
+        case KEY.U:
+            rotate(SIDES.up, setAxes({y: [2]}), -1)
             break
-        case 'D':
-            rotateBack(true)
+        case KEY.U_PRIME:
+            rotate(SIDES.up, setAxes({y: [2]}), 1)
             break
-        case 'f':
-            rotateRight()
+        case KEY.D:
+            rotate(SIDES.down, setAxes({y: [0]}), -1)
             break
-        case 'F':
-            rotateRight(true)
+        case KEY.D_PRIME:
+            rotate(SIDES.down, setAxes({y: [0]}), 1)
             break
-        case 'e':
-            rotateUp()
+        case KEY.F:
+            rotate(SIDES.front, setAxes({z: [2]}), -1)
             break
-        case 'E':
-            rotateUp(true)
+        case KEY.F_PRIME:
+            rotate(SIDES.front, setAxes({z: [2]}), 1)
             break
-        case 'r':
-            rotateDown()
+        case KEY.B:
+            rotate(SIDES.back, setAxes({z: [0]}), -1)
             break
-        case 'R':
-            rotateDown(true)
+        case KEY.B_PRIME:
+            rotate(SIDES.back, setAxes({z: [0]}), 1)
+            break
+        case KEY.M:
+            rotate(SIDES.left, setAxes({x: [1]}), -1)
+            break
+        case KEY.M_PRIME:
+            rotate(SIDES.left, setAxes({x: [1]}), 1)
             break
         default:
             break
