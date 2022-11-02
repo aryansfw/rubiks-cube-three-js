@@ -2,6 +2,9 @@ import * as THREE from 'three'
 import { OrbitControls } from 'https://unpkg.com/three@0.146.0/examples/jsm/controls/OrbitControls.js';
 import * as PIECE from './piece.js'
 
+// Event Listeners
+document.addEventListener('keypress', (e) => controlManager(e.key.toLowerCase()))
+
 // Constants
 const ROTATION_SPEED = 1/60
 const PI = Math.PI
@@ -16,12 +19,12 @@ const YELLOW = 0xffff00
 const KEY = {
     R       : 'k',
     R_PRIME : 'j',
-    L       : 'd',
-    L_PRIME : 'f',
+    L       : 'f',
+    L_PRIME : 'd',
     U       : 'u',
     U_PRIME : 'r',
-    D       : 'c',
-    D_PRIME : ',',
+    D       : ',',
+    D_PRIME : 'c',
     F       : 'm',
     F_PRIME : 'v',
     B       : 'e',
@@ -40,20 +43,19 @@ const KEY = {
     Z_PRIME : 'z',
 }
 
-// Event Listeners
-document.addEventListener('keypress', controlManager)
 
 // Global variables
-let animationFrame
+let animationFrame = 0
 let rotation = 0
+let keyBuffer = []
 
 // Three Javascript
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000)
+const camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 1000)
 camera.position.set(5, 4, 5)
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight )
+renderer.setSize( window.innerWidth, window.innerHeight - 1)
 renderer.setClearColor(0x2f3133)
 document.body.appendChild(renderer.domElement)
 
@@ -61,7 +63,7 @@ document.body.appendChild(renderer.domElement)
 const controls = new OrbitControls( camera, renderer.domElement )
 controls.target.set(1, 1, 1)
 
-// -- Helper Functions --
+// Helper Functions
 function vect3(x, y, z) {
     return new THREE.Vector3(x, y, z)
 }
@@ -101,6 +103,13 @@ function createGroup(parent, x, y, z) {
     return group
 }
 
+function popKeyQueue() {
+    if (keyBuffer.length > 0) {
+        controlManager(keyBuffer[0])
+        keyBuffer.shift()
+    }
+}
+
 function reset(side) {
     cancelAnimationFrame(animationFrame)
     Array.from(side.children).forEach((piece) => {
@@ -112,6 +121,9 @@ function reset(side) {
     side.rotation.set(0, 0, 0)
     rotation = 0
     animationFrame = 0
+
+    // Start next animation in keyBuffer
+    popKeyQueue()
 }
 
 // Set which pieces to rotate
@@ -204,9 +216,12 @@ function doRotation(s, axes, direction) {
 }
 
 // Keybindings
-function controlManager(e) {
-    if (animationFrame) return
-    switch (e.key) {
+function controlManager(key) {
+    if (animationFrame) {
+        keyBuffer.push(key)
+        return
+    }
+    switch (key) {
         case KEY.R:
             rotate(SIDES.right, setAxes({x: getSelected([2])}), -1)
             break
@@ -214,10 +229,10 @@ function controlManager(e) {
             rotate(SIDES.right, setAxes({x: getSelected([2])}), 1)
             break
         case KEY.L:
-            rotate(SIDES.left, setAxes({x: getSelected([0])}), -1)
+            rotate(SIDES.left, setAxes({x: getSelected([0])}), 1)
             break
         case KEY.L_PRIME:
-            rotate(SIDES.left, setAxes({x: getSelected([0])}), 1)
+            rotate(SIDES.left, setAxes({x: getSelected([0])}), -1)
             break
         case KEY.U:
             rotate(SIDES.up, setAxes({y: getSelected([2])}), -1)
@@ -226,10 +241,10 @@ function controlManager(e) {
             rotate(SIDES.up, setAxes({y: getSelected([2])}), 1)
             break
         case KEY.D:
-            rotate(SIDES.down, setAxes({y: getSelected([0])}), -1)
+            rotate(SIDES.down, setAxes({y: getSelected([0])}), 1)
             break
         case KEY.D_PRIME:
-            rotate(SIDES.down, setAxes({y: getSelected([0])}), 1)
+            rotate(SIDES.down, setAxes({y: getSelected([0])}), -1)
             break
         case KEY.F:
             rotate(SIDES.front, setAxes({z: getSelected([2])}), -1)
@@ -238,10 +253,10 @@ function controlManager(e) {
             rotate(SIDES.front, setAxes({z: getSelected([2])}), 1)
             break
         case KEY.B:
-            rotate(SIDES.back, setAxes({z: getSelected([0])}), -1)
+            rotate(SIDES.back, setAxes({z: getSelected([0])}), 1)
             break
         case KEY.B_PRIME:
-            rotate(SIDES.back, setAxes({z: getSelected([0])}), 1)
+            rotate(SIDES.back, setAxes({z: getSelected([0])}), -1)
             break
         case KEY.M:
             rotate(SIDES.middle, setAxes({x: getSelected([1])}), -1)
