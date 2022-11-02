@@ -1,4 +1,3 @@
-// import * as THREE from '../../three.js'
 import * as THREE from 'three'
 import { OrbitControls } from 'https://unpkg.com/three@0.146.0/examples/jsm/controls/OrbitControls.js';
 import * as PIECE from './piece.js'
@@ -8,27 +7,37 @@ const ROTATION_SPEED = 1/60
 const PI = Math.PI
 const R_ANGLE = PI * 0.5
 const WHITE = 0xffffff
-const RED = 0xff0000
-const BLUE = 0x0000ff
+const RED = 0xc72033
+const BLUE = 0x00a2ff 
 const ORANGE = 0xffa500
 const GREEN = 0x00ff00
 const YELLOW = 0xffff00
 
 const KEY = {
-    R: 'k',
-    R_PRIME: 'j',
-    L: 'd',
-    L_PRIME: 'f',
-    U: 'u',
-    U_PRIME: 'r',
-    D: 'v',
-    D_PRIME: 'm',
-    F: 'n',
-    F_PRIME: 'b',
-    B: 'e',
-    B_PRIME: 'i',
-    M: 'h',
-    M_PRIME: 'g'
+    R       : 'k',
+    R_PRIME : 'j',
+    L       : 'd',
+    L_PRIME : 'f',
+    U       : 'u',
+    U_PRIME : 'r',
+    D       : 'c',
+    D_PRIME : ',',
+    F       : 'm',
+    F_PRIME : 'v',
+    B       : 'e',
+    B_PRIME : 'i',
+    M       : 'h',
+    M_PRIME : 'g',
+    S       : 'y',
+    S_PRIME : 't',
+    E       : 'n',
+    E_PRIME : 'b',
+    X       : 'w',
+    X_PRIME : 'q',
+    Y       : 'a',
+    Y_PRIME : 's',
+    Z       : 'x',
+    Z_PRIME : 'z',
 }
 
 // Event Listeners
@@ -48,11 +57,9 @@ renderer.setSize( window.innerWidth, window.innerHeight )
 renderer.setClearColor(0x2f3133)
 document.body.appendChild(renderer.domElement)
 
+// Camera controller
 const controls = new OrbitControls( camera, renderer.domElement )
-
-// const axesHelper = new THREE.AxesHelper(10)
-// axesHelper.position.set(-0.5, -0.5, -0.5)
-// scene.add(axesHelper)
+controls.target.set(1, 1, 1)
 
 // -- Helper Functions --
 function vect3(x, y, z) {
@@ -107,13 +114,20 @@ function reset(side) {
     animationFrame = 0
 }
 
-function setAxes({x = [0, 1, 2], y = [0, 1, 2], z = [0, 1, 2]}) {
+// Set which pieces to rotate
+function setAxes({
+    x = {values: [0, 1, 2], selected: false}, 
+    y = {values: [0, 1, 2], selected: false}, 
+    z = {values: [0, 1, 2], selected: false}
+}) {
     return {
         x: x,
         y: y,
         z: z,
     }
 }
+
+const getSelected = (arr) => { return {values: arr, selected: true} }
 
 // Building the rubik's cube
 const pieces = [
@@ -157,16 +171,17 @@ const SIDES = {
     'back'  : createGroup(scene, 1, 1, 0),
     'right' : createGroup(scene, 2, 1, 1),
     'up'    : createGroup(scene, 1, 2, 1),
-    'front' : createGroup(scene, 1, 1, 2)
+    'front' : createGroup(scene, 1, 1, 2),
+    'middle': createGroup(scene, 1, 1, 1),
 }
 
+// Rotation functions
 function rotate(s, axes, direction = false) {
     pieces.forEach((piece) => {
         let pos = piece.position
-        if (axes.x.includes(pos.x) && axes.y.includes(pos.y) && axes.z.includes(pos.z)) {
+        if (axes.x.values.includes(pos.x) && axes.y.values.includes(pos.y) && axes.z.values.includes(pos.z)) {
             piece.position.set(pos.x - s.position.x, pos.y - s.position.y, pos.z - s.position.z)
             s.add(piece)
-            console.log(s)
         }
     })
     doRotation(s, axes, direction)
@@ -175,11 +190,11 @@ function rotate(s, axes, direction = false) {
 function doRotation(s, axes, direction) {
     animationFrame = requestAnimationFrame(() => doRotation(s, axes, direction))
     if (rotation < R_ANGLE) {
-        if (axes.x.length == 1) {
+        if (axes.x.selected) {
             s.rotation.x += PI * ROTATION_SPEED * direction
-        } else if (axes.y.length == 1) {
+        } else if (axes.y.selected) {
             s.rotation.y += PI * ROTATION_SPEED * direction
-        } else if (axes.z.length == 1) {
+        } else if (axes.z.selected) {
             s.rotation.z += PI * ROTATION_SPEED * direction
         }
         rotation += Math.PI * ROTATION_SPEED
@@ -193,46 +208,76 @@ function controlManager(e) {
     if (animationFrame) return
     switch (e.key) {
         case KEY.R:
-            rotate(SIDES.right, setAxes({x: [2]}), -1)
+            rotate(SIDES.right, setAxes({x: getSelected([2])}), -1)
             break
         case KEY.R_PRIME:
-            rotate(SIDES.right, setAxes({x: [2]}), 1)
+            rotate(SIDES.right, setAxes({x: getSelected([2])}), 1)
             break
         case KEY.L:
-            rotate(SIDES.left, setAxes({x: [0]}), -1)
+            rotate(SIDES.left, setAxes({x: getSelected([0])}), -1)
             break
         case KEY.L_PRIME:
-            rotate(SIDES.left, setAxes({x: [0]}), 1)
+            rotate(SIDES.left, setAxes({x: getSelected([0])}), 1)
             break
         case KEY.U:
-            rotate(SIDES.up, setAxes({y: [2]}), -1)
+            rotate(SIDES.up, setAxes({y: getSelected([2])}), -1)
             break
         case KEY.U_PRIME:
-            rotate(SIDES.up, setAxes({y: [2]}), 1)
+            rotate(SIDES.up, setAxes({y: getSelected([2])}), 1)
             break
         case KEY.D:
-            rotate(SIDES.down, setAxes({y: [0]}), -1)
+            rotate(SIDES.down, setAxes({y: getSelected([0])}), -1)
             break
         case KEY.D_PRIME:
-            rotate(SIDES.down, setAxes({y: [0]}), 1)
+            rotate(SIDES.down, setAxes({y: getSelected([0])}), 1)
             break
         case KEY.F:
-            rotate(SIDES.front, setAxes({z: [2]}), -1)
+            rotate(SIDES.front, setAxes({z: getSelected([2])}), -1)
             break
         case KEY.F_PRIME:
-            rotate(SIDES.front, setAxes({z: [2]}), 1)
+            rotate(SIDES.front, setAxes({z: getSelected([2])}), 1)
             break
         case KEY.B:
-            rotate(SIDES.back, setAxes({z: [0]}), -1)
+            rotate(SIDES.back, setAxes({z: getSelected([0])}), -1)
             break
         case KEY.B_PRIME:
-            rotate(SIDES.back, setAxes({z: [0]}), 1)
+            rotate(SIDES.back, setAxes({z: getSelected([0])}), 1)
             break
         case KEY.M:
-            rotate(SIDES.left, setAxes({x: [1]}), -1)
+            rotate(SIDES.middle, setAxes({x: getSelected([1])}), -1)
             break
         case KEY.M_PRIME:
-            rotate(SIDES.left, setAxes({x: [1]}), 1)
+            rotate(SIDES.middle, setAxes({x: getSelected([1])}), 1)
+            break
+        case KEY.S:
+            rotate(SIDES.middle, setAxes({z: getSelected([1])}), -1)
+            break
+        case KEY.S_PRIME:
+            rotate(SIDES.middle, setAxes({z: getSelected([1])}), 1)
+            break
+        case KEY.E:
+            rotate(SIDES.middle, setAxes({y: getSelected([1])}), 1)
+            break
+        case KEY.E_PRIME:
+            rotate(SIDES.middle, setAxes({y: getSelected([1])}), -1)
+            break
+        case KEY.X:
+            rotate(SIDES.middle, setAxes({x: getSelected([0, 1, 2])}), -1)
+            break
+        case KEY.X_PRIME:
+            rotate(SIDES.middle, setAxes({x: getSelected([0, 1, 2])}), 1)
+            break
+        case KEY.Y:
+            rotate(SIDES.middle, setAxes({y: getSelected([0, 1, 2])}), -1)
+            break
+        case KEY.Y_PRIME:
+            rotate(SIDES.middle, setAxes({y: getSelected([0, 1, 2])}), 1)
+            break
+        case KEY.Z:
+            rotate(SIDES.middle, setAxes({z: getSelected([0, 1, 2])}), -1)
+            break
+        case KEY.Z_PRIME:
+            rotate(SIDES.middle, setAxes({z: getSelected([0, 1, 2])}), 1)
             break
         default:
             break
