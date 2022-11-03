@@ -1,20 +1,27 @@
 import * as THREE from 'three'
 
 // Constants
-const BLACK = 0x1b1c1c
+const WHITE = 0xffffff
+const RED = 0xc72033
+const BLUE = 0x00a2ff 
+const ORANGE = 0xffa500
+const GREEN = 0x00ff00
+const YELLOW = 0xffff00
+const BLACK = 0x000000
 
-// Functions
+// Helper Functions
+const vec = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z)
+const rot = (x = 0, y = 0, z = 0) => new THREE.Euler(x, y, z)
+
 function createSide(parent, color, pos, rot) {
-    const [x, y, z] = pos
-    const [xr, yr, zr] = rot
     const sideGeometry = new THREE.PlaneGeometry(1, 1)
     const sideMaterial = new THREE.MeshBasicMaterial({
         color: color,
         side: THREE.DoubleSide
     })
     const side = new THREE.Mesh(sideGeometry, sideMaterial)
-    side.position.set(x, y, z)
-    side.rotation.set(xr, yr, zr)
+    side.rotation.set(rot.x, rot.y, rot.z)
+    side.position.set(pos.x, pos.y, pos.z)
 
     const wireframeGeometry = new THREE.EdgesGeometry(side.geometry)
     const wireframeMaterial = new THREE.LineBasicMaterial({
@@ -25,56 +32,24 @@ function createSide(parent, color, pos, rot) {
     return side
 }
 
-// Classes
-class Center extends THREE.Group {
-    constructor(color) {
+// Class
+class Piece extends THREE.Group {
+    constructor(colors = {white: false, red: false, blue: false, orange: false, green: false, yellow: false}) {
         super()
-        this.isCenter = true
-        this.color = color
-        this.side = createSide(this, color, [0, 0, 0.5], [0, 0, 0])
-    }
-}
-
-class Edge extends THREE.Group {
-    constructor(color) {
-        super()
-        this.isEdge = true
-        this.color = color
-        this.side = this.initSides()
+        this.colors = colors
+        this.sides = this.initSides()
     }
 
     initSides() {
-        const side = [
-            createSide(this, this.color[0], [0, 0, 0.5], [0, 0, 0]),
-            createSide(this, this.color[1], [0, 0.5, 0], [Math.PI * 0.5, 0, 0]),
-            createSide(this, BLACK, [0.5, 0, 0], [0, Math.PI * 0.5, 0]),
-            createSide(this, BLACK, [-0.5, 0, 0], [0, Math.PI * 0.5, 0]),
-            createSide(this, BLACK, [0, -0.5, 0], [Math.PI * 0.5, 0, 0]),
-            createSide(this, BLACK, [0, 0, -0.5], [0, 0, 0]),
-        ]
-        return side
+        return {
+            positiveX: createSide(this, (this.colors.red)    ? RED    : BLACK, vec(0.5, 0, 0), rot(0, Math.PI * 0.5, 0)),
+            negativeX: createSide(this, (this.colors.orange) ? ORANGE : BLACK, vec(-0.5, 0, 0), rot(0, Math.PI * 0.5, 0)),
+            positiveY: createSide(this, (this.colors.yellow) ? YELLOW : BLACK, vec(0, 0.5, 0), rot(Math.PI * 0.5, 0, 0)),
+            negativeY: createSide(this, (this.colors.white)  ? WHITE  : BLACK, vec(0, -0.5, 0), rot(Math.PI * 0.5, 0, 0)),
+            positiveZ: createSide(this, (this.colors.blue)   ? BLUE   : BLACK, vec(0, 0, 0.5), rot()),
+            negativeZ: createSide(this, (this.colors.green)  ? GREEN  : BLACK, vec(0, 0, -0.5), rot()),
+        }
     }
 }
 
-class Corner extends THREE.Group {
-    constructor(color) {
-        super()
-        this.isCorner = true
-        this.color = color
-        this.side = this.initSides()
-    }
-
-    initSides() {
-        const side = [
-            createSide(this, this.color[0], [0, 0, 0.5], [0, 0, 0]),
-            createSide(this, this.color[1], [0, 0.5, 0], [Math.PI * 0.5, 0, 0]),
-            createSide(this, this.color[2], [0.5, 0, 0], [0, Math.PI * 0.5, 0]),
-            createSide(this, BLACK, [-0.5, 0, 0], [0, Math.PI * 0.5, 0]),
-            createSide(this, BLACK, [0, -0.5, 0], [Math.PI * 0.5, 0, 0]),
-            createSide(this, BLACK, [0, 0, -0.5], [0, 0, 0]),
-        ]
-        return side
-    }
-}
-
-export { Center, Edge, Corner }
+export { Piece }
